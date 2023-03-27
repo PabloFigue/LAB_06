@@ -1,0 +1,53 @@
+1. Configura el Puerto:	
+	Deshabilita el driver de salida del pin (ver registro TRIS).
+	Configura el pin como analógico.
+
+		TRISAbits.TRISA0 = 1; // Configura el pin RA0 como entrada
+		ANSELbits.ANS0 = 1;   // Configura el pin RA0 como entrada analógica
+
+2.Configura el módulo ADC:
+	Selecciona la frecuencia de conversión del ADC.
+	Configura la referencia de voltaje.
+	Selecciona el canal de entrada del ADC.
+	Selecciona el formato de resultado.
+	Enciende el módulo ADC.
+
+		ADCON0bits.ADCS = 0b10;       // Selecciona el reloj de conversión del ADC
+		ADCON1bits.VCFG0 = 0;         // Selecciona la referencia de voltaje (VREF) = VDD
+		ADCON1bits.VCFG1 = 0;         // Selecciona la referencia de voltaje (VREF-) = VSS
+		ADCON0bits.CHS = channel;     // Selecciona el canal de entrada del ADC
+		ADCON1bits.ADFM = 0;          // Selecciona el formato de resultado (izquierda justificado)
+		ADCON0bits.ADON = 1;          // Enciende el módulo ADC
+
+
+3.Configura la interrupción del ADC (opcional):
+	Limpia la bandera de interrupción del ADC.
+	Habilita la interrupción del ADC.
+	Habilita la interrupción del periférico.
+	Habilita la interrupción global.
+
+		PIR1bits.ADIF = 0;   // Limpia la bandera de interrupción del ADC
+		PIE1bits.ADIE = 1;   // Habilita la interrupción del ADC
+		INTCONbits.PEIE = 1; // Habilita la interrupción del periférico
+		INTCONbits.GIE = 1;  // Habilita la interrupción global
+
+
+4.Espera el tiempo de adquisición requerido.
+
+5.Inicia la conversión configurando el bit GO/DONE.
+
+		ADCON0: Bit GO/DONE
+
+6.Espera a que la conversión del ADC se complete mediante una de las siguientes opciones:
+
+	Revisando el bit GO/DONE.
+	Esperando a la interrupción del ADC (si las interrupciones están habilitadas).
+
+		ADCON0: Bit GO/DONE
+		PIR1: Bit ADIF
+
+7.Lee el resultado del ADC. - Bytes ADRESH y ADRESL
+
+8.Limpia la bandera de interrupción del ADC (es requerido si la interrupción está habilitada).
+
+		PIR1: Bit ADIF
