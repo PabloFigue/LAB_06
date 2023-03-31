@@ -1,13 +1,10 @@
 /* 
- * File:   POSTLAB.c
+ * File:   Postlab_06.c
  * Author: pablo
  *
- * Created on 30 de marzo de 2023, 11:20 p.m.
+ * Created on 31 de marzo de 2023, 12:19 a.m.
  */
 
-// PIC16F887 Configuration Bit Settings
-// 'C' source line config statements
-// CONFIG1
 #pragma config FOSC = INTRC_NOCLKOUT// Oscillator Selection bits (INTOSCIO oscillator: I/O function on RA6/OSC2/CLKOUT pin, I/O function on RA7/OSC1/CLKIN)
 #pragma config WDTE = OFF       // Watchdog Timer Enable bit (WDT disabled and can be enabled by SWDTEN bit of the WDTCON register)
 #pragma config PWRTE = OFF      // Power-up Timer Enable bit (PWRT disabled)
@@ -43,9 +40,28 @@
 
 /**********VARIABLES GLOBALES**********/
 
-uint8_t var;
 int adc1;
 int adc2;
+
+// TABLA DE CONVERSION -> VALORES PARA LOS DISPLAYS (Unicamente usaremos los primeros 9)
+uint8_t TABLA[16] = {0b00111111,    //0
+                     0b00000110,    //1
+                     0b01011011,    //2
+                     0b01001111,    //3
+                     0b01100110,    //4
+                     0b01101101,    //5
+                     0b01111101,    //6
+                     0b00000111,    //7
+                     0b01111111,    //8
+                     0b01100111,    //9
+                     0b01110111,    //A
+                     0b01111100,    //B
+                     0b00111001,    //C
+                     0b01011110,    //D
+                     0b01111001,    //E
+                     0b01110001};   //F 
+
+
 
 /**********PROTOTIPOS**********/
 void setup(void);
@@ -84,13 +100,10 @@ void main(void)
     setup();
     while(1)   //loop principal
     { 
-        //PORTD = 255;
-        //__delay_ms(10);
         ADCON0bits.GO = 1;      //Iniciar a convertir
         while (ADIF == 0); 
-       //PORTD =0;
         __delay_ms(10);
- 
+        
     }
 }
 
