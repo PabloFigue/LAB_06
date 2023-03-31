@@ -35,14 +35,16 @@
 
 /**********DEFINIR CONSTANTES**********/
 
-#define _tmr0_value 61
+#define _tmr0_value 80
 #define _XTAL_FREQ 8000000
 
 /**********VARIABLES GLOBALES**********/
 
 int adc1;
-int adc2;
-int disp0, disp1, disp2;
+uint8_t disp0, disp1, disp2;
+uint8_t display[3];
+uint8_t bandera = 0;
+int voltaje, residuo;
 
 
 // TABLA DE CONVERSION -> VALORES PARA LOS DISPLAYS (Unicamente usaremos los primeros 9)
@@ -75,6 +77,26 @@ void __interrupt () isr(void)
     if(T0IF)    //tmr0
     { 
         PORTB ++;
+
+        if (bandera == 0){              // verifica la bandera si es 0
+            PORTC = (char)display[2];   // 
+            PORTC = PORTC | 0b10000000; // OR para encender el bit del punto del display de las unidades
+            PORTE = 0b001;                  // habilita el display
+            bandera = 1;                //cambia el valor de la bandera apuntando al display siguiente
+            
+            
+        }
+        else if (bandera == 1){         
+            PORTC = (char)display[1];   
+            PORTE = 0b010;                  
+            bandera = 2;   
+        }
+        else if (bandera == 2){         
+            PORTC = (char)display[0];  
+            PORTE = 0b100;                  
+            bandera = 0; 
+        }
+
         TMR0 = _tmr0_value;
         INTCONbits.T0IF = 0;
     }
@@ -82,8 +104,9 @@ void __interrupt () isr(void)
     { 
         if (ADCON0bits.CHS == 0b0000) {         // Canal 0
             adc1 = ADRESH;
-            calculo(adc1);
+            //calculo(adc1);
             ADCON0bits.CHS = 0b0001;            // cambia a canal 1
+
         } else if (ADCON0bits.CHS == 0b0001){   // Canal 1
             PORTD = ADRESH;
             ADCON0bits.CHS = 0b0000;            // Canal 0
@@ -99,12 +122,20 @@ void __interrupt () isr(void)
 void main(void) 
 {
     setup();
+    disp0=0;
+    disp1=0;
+    disp2=0;
     while(1)   //loop principal
     { 
+        
         ADCON0bits.GO = 1;      //Iniciar a convertir
         while (ADIF == 0); 
-        __delay_ms(10);
-        
+        __delay_ms(10);    
+        calculo(adc1);
+        // Asigna los valores correspondientes de la tabla a cada dígito del display
+        display[0] = TABLA[disp0];
+        display[1] = TABLA[disp1];
+        display[2] = TABLA[disp2];
     }
 }
 
@@ -113,11 +144,12 @@ void main(void)
     
 void calculo(int adc1)
 {
-    int voltaje = (int)(adc1*((float)(5/255)*(100))); //Conversión del ADC a voltaje (Se multiplica por 100 para mostrar 3 displays en una representación de 0.01V)
+
+    voltaje = (int)(adc1*((float)5/255*(100))); //Conversión del ADC a voltaje (Se multiplica por 100 para mostrar 3 displays en una representación de 0.01V)
     disp2 = (uint8_t)(voltaje/100);    //Calcular las Unidades de Voltio, que corresponde al display más significativo por lo que se divide entre 100 y se redondea.
-    int residuo = voltaje%100;         //El residuo es el restante de la division entre 2 numeros gracias al módulo (%)                          
-    disp1 = residuo/10;                //El display 1 corresponde al primer Decimal, por lo que se divide entre 10 (decenas del voltaje)
-    disp0 = residuo%10;                //El display directamente es el restante de la división de las decenas de voltaje entre 10.
+    residuo = voltaje%100;         //El residuo es el restante de la division entre 2 numeros gracias al módulo (%)                          
+    disp1 = (uint8_t)residuo/10;                //El display 1 corresponde al primer Decimal, por lo que se divide entre 10 (decenas del voltaje)
+    disp0 = (uint8_t)residuo%10;                //El display directamente es el restante de la división de las decenas de voltaje entre 10.
     return;    
 }
 
@@ -129,11 +161,13 @@ void setup(void)
     TRISB = 0;
     TRISC = 0;
     TRISD = 0;   
+    TRISE = 0;
     
     PORTA = 0;
     PORTB = 0;
     PORTC = 0;
     PORTD = 0;
+    PORTE = 0;
         
 
     OSCCONbits.IRCF = 0b111;    //8MHz
@@ -163,6 +197,7 @@ void setup(void)
     ADCON1bits.VCFG0 = 0;   //Vdd
     ADCON1bits.VCFG1 = 0;   //Vss
     ADCON0bits.ADON = 1;    //ADC enable
+    __delay_us(100);
     ADIF =  0;
     
    
