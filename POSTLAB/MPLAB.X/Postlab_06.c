@@ -42,6 +42,8 @@
 
 int adc1;
 int adc2;
+int disp0, disp1, disp2;
+
 
 // TABLA DE CONVERSION -> VALORES PARA LOS DISPLAYS (Unicamente usaremos los primeros 9)
 uint8_t TABLA[16] = {0b00111111,    //0
@@ -62,9 +64,10 @@ uint8_t TABLA[16] = {0b00111111,    //0
                      0b01110001};   //F 
 
 
-
 /**********PROTOTIPOS**********/
+
 void setup(void);
+void calculo(int adc1);
 
 /**********INTERRUPCIONES**********/
 void __interrupt () isr(void)
@@ -78,7 +81,8 @@ void __interrupt () isr(void)
     if (ADIF)   //Interrupcion del ADC
     { 
         if (ADCON0bits.CHS == 0b0000) {         // Canal 0
-            PORTC = ADRESH;
+            adc1 = ADRESH;
+            calculo(adc1);
             ADCON0bits.CHS = 0b0001;            // cambia a canal 1
         } else if (ADCON0bits.CHS == 0b0001){   // Canal 1
             PORTD = ADRESH;
@@ -92,9 +96,6 @@ void __interrupt () isr(void)
 /**********CÓDIGO PRINCIPAL**********/
 
 
-/*
- * 
- */
 void main(void) 
 {
     setup();
@@ -107,9 +108,18 @@ void main(void)
     }
 }
 
-
-
 /**********FUNCIONES**********/
+
+    
+void calculo(int adc1)
+{
+    int voltaje = (int)(adc1*((float)(5/255)*(100))); //Conversión del ADC a voltaje (Se multiplica por 100 para mostrar 3 displays en una representación de 0.01V)
+    disp2 = (uint8_t)(voltaje/100);    //Calcular las Unidades de Voltio, que corresponde al display más significativo por lo que se divide entre 100 y se redondea.
+    int residuo = voltaje%100;         //El residuo es el restante de la division entre 2 numeros gracias al módulo (%)                          
+    disp1 = residuo/10;                //El display 1 corresponde al primer Decimal, por lo que se divide entre 10 (decenas del voltaje)
+    disp0 = residuo%10;                //El display directamente es el restante de la división de las decenas de voltaje entre 10.
+    return;    
+}
 
 void setup(void)
 {
@@ -158,4 +168,3 @@ void setup(void)
    
     return;
 }
-    
